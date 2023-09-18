@@ -15,7 +15,7 @@ if [ "x${PBS_NODEFILE}" != "x" ]; then
     cat $PBS_NODEFILE
 fi
 
-cd /home/xysong/RaschSim/
+cd /home/rivachen/OOD_learning_GP_models_in_R/
 
 module load R
-R CMD BATCH --no--save --no--restore Rasch_HD.R
+R CMD BATCH --no--save --no--restore xxx.R

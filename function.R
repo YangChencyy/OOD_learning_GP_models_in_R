@@ -8,6 +8,7 @@ library(MASS)
 library(foreach)
 library(umap)
 
+
 KL <- function(u1, u2, std1, std2){
   kl_divergence <- log(std1 / std2) + (std2^2 + (u1 - u2)^2) / (2 * std1^2) - 0.5
   return(kl_divergence)
@@ -319,3 +320,9 @@ KL_all2 <- function(u1_list, u2, std1_list, std2){
   }
   return(mean(KLs))
 }
+
+
+
+InD_Dataset = "MNIST"
+OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = 3000, n_ts = 1000, f = 16)  # Run only once, specify the training samples to use
