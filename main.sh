@@ -18,4 +18,4 @@ fi
 cd /home/rivachen/OOD_learning_GP_models_in_R/
 
 module load R
-R CMD BATCH --no--save --no--restore xxx.R
+R CMD BATCH --no--save --no--restore function.R
