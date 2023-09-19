@@ -70,6 +70,19 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   
   print("Train Finished")
   
+  directory_path <- paste0("Rdata_", toString(n_tr), "_", toString(f))
+  
+  # Use dir.create() to create the directory
+  if (!dir.exists(directory_path)) {
+    if (dir.create(directory_path)) {
+      cat("Directory created successfully:", directory_path, "\n")
+    } else {
+      cat("Failed to create the directory:", directory_path, "\n")
+    }
+  } else {
+    cat("Directory already exists:", directory_path, "\n")
+  }
+  
   for (testset in testsets){
     results_test = vector("list", 10)
     results_ood = vector("list", 10)
@@ -325,4 +338,4 @@ KL_all2 <- function(u1_list, u2, std1_list, std2){
 
 InD_Dataset = "MNIST"
 OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = 3000, n_ts = 1000, f = 16)  # Run only once, specify the training samples to use
+model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = 1000, n_ts = 1000, f = 16)  # Run only once, specify the training samples to use
