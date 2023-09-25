@@ -9,9 +9,6 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --partition=standard
 
-if [ "x${PBS_NODEFILE}" != "x" ]; then
-    cat $PBS_NODEFILE
-fi
 
 cd /home/rivachen/OOD_learning_GP_models_in_R/
 
