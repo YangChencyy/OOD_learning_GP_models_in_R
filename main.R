@@ -337,10 +337,10 @@ KL_all2 <- function(u1_list, u2, std1_list, std2){
 # 
 args <- commandArgs(trailingOnly = TRUE)
 InD_Dataset = args[1]
-n_tr = as.interger(args[2])
-n_ts = as.interger(args[3])
+n_tr = as.integer(args[2])
+n_ts = as.integer(args[3])
 
-f = as.interger(args[4])
+f = as.integer(args[4])
 if (InD_Dataset == "MNIST"){
     OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
 } else{
