@@ -349,3 +349,28 @@ if (InD_Dataset == "MNIST"){
 
 
 model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
+
+list0.9_InD = c()
+list0.9_OOD = c()
+for (i in 1:5){
+  pred = score_function(InD_Dataset, OOD_Datasets[i], q = 0.9, f = f, n_tr = n_tr)
+  list0.9_InD = c(list5000_0.9_InD, pred$ID_all)
+  list0.9_OOD = c(list5000_0.9_OOD, pred$OOD_all)
+}
+
+list0.8_InD = c()
+list0.8_OOD = c()
+for (i in 1:5){
+  pred = score_function(InD_Dataset, OOD_Datasets[i], q = 0.8, f = f, n_tr = n_tr)
+  list0.8_InD = c(list5000_0.8_InD, pred$ID_all)
+  list0.8_OOD = c(list5000_0.8_OOD, pred$OOD_all)
+}
+
+df = data.frame(InD_0.9 = list1000_0.9_InD, 
+                   OOD_0.9 = list1000_0.9_OOD,
+                   InD_0.8 = list1000_0.8_InD, 
+                   OOD_0.8 = list1000_0.8_OOD)
+rownames(df) <- OOD_Datasets
+print(paste0("InD - ", InD_Dataset))
+print(paste0("features - ", args[4]))
+paged_table(df)
