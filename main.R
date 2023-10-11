@@ -348,7 +348,7 @@ if (InD_Dataset == "MNIST"){
 }
 
 
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
+# model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
 
 list0.9_InD = c()
 list0.9_OOD = c()
