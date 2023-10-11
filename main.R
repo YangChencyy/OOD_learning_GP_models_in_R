@@ -373,4 +373,5 @@ df = data.frame(InD_0.9 = list0.9_InD,
 rownames(df) <- OOD_Datasets
 print(paste0("InD - ", InD_Dataset))
 print(paste0("features - ", args[4]))
+print(paste0("n_tr - ", args[2]))
 paged_table(df)
