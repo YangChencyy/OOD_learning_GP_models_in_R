@@ -127,9 +127,9 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   
   print("Test Finished")
   # save(Y, models, file=paste0("Rdata/", trainset, "_models.RData"))
+}  
   
-  
-}
+
 
 get_argmax <- function(x) {
   return(which.max(x) - 1)
@@ -203,135 +203,6 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9
                  ID_acc = ID_acc_list, OOD_acc = OOD_acc_list, ID_all = ID_sum/n_ts, OOD_all = OOD_sum/n_ts)
   
   return(result)
-}
-
-
-# For plot
-
-colors <- c("rgba(31, 119, 180, 0.6)", "rgba(255, 127, 14, 0.6)", "rgba(44, 160, 44, 0.6)")
-
-hist_KL <- function(distance, X2, i, r = 500){
-  fig <- plot_ly(alpha = 0.6)
-  fig <- fig %>% add_histogram(x = ~distance, name = "Test - ID", marker = list(color = colors[1]))
-  fig <- fig %>% add_histogram(x = ~X2, name = "Test - OOD", marker = list(color = colors[2]))
-  fig <- fig %>% layout(barmode = "overlay", 
-                        title = paste0('Model', i),
-                        xaxis = list(
-                          range = c(0, r)
-                        )
-  )
-  return(fig)
-}
-
-hist_meanSD <- function(X, X2, X3, i){
-  fig <- plot_ly(alpha = 0.6)
-  fig <- fig %>% add_histogram(x = ~X, name = "Test - ID", marker = list(color = colors[1]))
-  fig <- fig %>% add_histogram(x = ~X2, name = "Test - OOD", marker = list(color = colors[2]))
-  fig <- fig %>% add_histogram(x = ~X3, name = "Train - CV", marker = list(color = colors[3]))
-  fig <- fig %>% layout(barmode = "overlay", 
-                        title = paste0('Model', i)
-  )
-  return(fig)
-}
-
-hist_plot_meanSD <- function(test.df, ood.df, cv_results, name, feature = "mean", r = 30){
-  if (feature == "mean"){
-    col = 1
-  }else{
-    col = 2
-  }
-  
-  #pl = vector("list", 9)
-  # for (i in 1:9){
-  #   p = hist_meanSD(test.df[[feature]][test.df$predictions == i], 
-  #             ood.df[[feature]][ood.df$predictions == i], 
-  #             cv_results[[i]][,col],
-  #             i, r)    
-  #   pl[[i]] = p
-  # }
-  
-  p1 = hist_meanSD(test.df[[feature]][test.df$predictions == 1], ood.df[[feature]][ood.df$predictions == 1], cv_results[[1]][,col], 1)
-  p2 = hist_meanSD(test.df[[feature]][test.df$predictions == 2], ood.df[[feature]][ood.df$predictions == 2], cv_results[[2]][,col], 2)  
-  p3 = hist_meanSD(test.df[[feature]][test.df$predictions == 3], ood.df[[feature]][ood.df$predictions == 3], cv_results[[3]][,col], 3)  
-  p4 = hist_meanSD(test.df[[feature]][test.df$predictions == 4], ood.df[[feature]][ood.df$predictions == 4], cv_results[[4]][,col], 4)  
-  p5 = hist_meanSD(test.df[[feature]][test.df$predictions == 5], ood.df[[feature]][ood.df$predictions == 5], cv_results[[5]][,col], 5)
-  p6 = hist_meanSD(test.df[[feature]][test.df$predictions == 6], ood.df[[feature]][ood.df$predictions == 6], cv_results[[6]][,col], 6)  
-  p7 = hist_meanSD(test.df[[feature]][test.df$predictions == 7], ood.df[[feature]][ood.df$predictions == 7], cv_results[[7]][,col], 7)  
-  p8 = hist_meanSD(test.df[[feature]][test.df$predictions == 8], ood.df[[feature]][ood.df$predictions == 8], cv_results[[8]][,col], 8)   
-  p9 = hist_meanSD(test.df[[feature]][test.df$predictions == 9], ood.df[[feature]][ood.df$predictions == 9], cv_results[[9]][,col], 9) 
-  
-  # Combine the plots using subplot function
-  combined_figure <- subplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, nrows = 3, shareX = TRUE, shareY = TRUE)
-  
-  combined_figure <- layout(
-    combined_figure, 
-    title = paste0(feature, " Plot -", name),
-    titlefont = list(size = 16)  # You can adjust the font size as needed
-  )
-  
-  # Show the combined figure
-  return(combined_figure)
-}
-
-hist_plot_KL <- function(test.df, ood.df, name, feature = "KL", r = 500){
-  
-  # pl = vector("list", 9)
-  # for (i in 1:9){
-  #   p = hist_KL(test.df[[feature]][test.df$predictions == i], ood.df[[feature]][ood.df$predictions == i], i, r)    
-  #   pl[[i]] = p
-  #   rm(p)
-  # }
-  
-  p1 = hist_KL(test.df[[feature]][test.df$predictions == 1], ood.df[[feature]][ood.df$predictions == 1], 1, r) 
-  p2 = hist_KL(test.df[[feature]][test.df$predictions == 2], ood.df[[feature]][ood.df$predictions == 2], 2, r) 
-  p3 = hist_KL(test.df[[feature]][test.df$predictions == 3], ood.df[[feature]][ood.df$predictions == 3], 3, r) 
-  p4 = hist_KL(test.df[[feature]][test.df$predictions == 4], ood.df[[feature]][ood.df$predictions == 4], 4, r) 
-  p5 = hist_KL(test.df[[feature]][test.df$predictions == 5], ood.df[[feature]][ood.df$predictions == 5], 5, r) 
-  p6 = hist_KL(test.df[[feature]][test.df$predictions == 6], ood.df[[feature]][ood.df$predictions == 6], 6, r) 
-  p7 = hist_KL(test.df[[feature]][test.df$predictions == 7], ood.df[[feature]][ood.df$predictions == 7], 7, r) 
-  p8 = hist_KL(test.df[[feature]][test.df$predictions == 8], ood.df[[feature]][ood.df$predictions == 8], 8, r) 
-  p9 = hist_KL(test.df[[feature]][test.df$predictions == 9], ood.df[[feature]][ood.df$predictions == 9], 9, r) 
-  
-  
-  # Combine the plots using subplot function
-  combined_figure <- subplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, nrows = 3, shareX = TRUE, shareY = TRUE)
-  
-  combined_figure <- layout(
-    combined_figure, 
-    title = paste0(feature, " Plot - ", name),
-    titlefont = list(size = 16)  # You can adjust the font size as needed
-  )
-  
-  # Show the combined figure
-  return(combined_figure)
-}
-
-KL1 <- function(u1, u2, std1, std2){
-  kl_divergence <- log(std2 / std1)
-  return(kl_divergence)
-}
-
-KL2 <- function(u1, u2, std1, std2){
-  kl_divergence <- (std1^2 + (u1 - u2)^2) / (2 * std2^2) - 0.5
-  return(kl_divergence)
-}
-
-KL_all1 <- function(u1_list, u2, std1_list, std2){
-  KLs = c()
-  for (i in 1:length(u1_list)){
-    distance = KL1(u1_list[i], u2, std1_list[i], std2)
-    KLs = c(KLs, distance)
-  }
-  return(mean(KLs))
-}
-
-KL_all2 <- function(u1_list, u2, std1_list, std2){
-  KLs = c()
-  for (i in 1:length(u1_list)){
-    distance = KL2(u1_list[i], u2, std1_list[i], std2)
-    KLs = c(KLs, distance)
-  }
-  return(mean(KLs))
 }
 
 # 
