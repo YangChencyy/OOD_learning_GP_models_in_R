@@ -214,8 +214,10 @@ n_ts = as.integer(args[3])
 f = as.integer(args[4])
 if (InD_Dataset == "MNIST"){
     OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-} else{
+} else if (InD_Dataset == "FashionMNIST"){
     OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+} else if (InD_Dataset == "Cifar_10"){
+    OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
 }
 
 
