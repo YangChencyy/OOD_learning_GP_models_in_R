@@ -121,7 +121,7 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     
     test.df = test.df[1:n_ts, ]
     ood.df = ood.df[1:n_ts, ]
-    print('save trained model and data to:', paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData") )
+    # print('save trained model and data to:', paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData") )
     save(results_test, test.df, results_ood, ood.df, cv_results,
          file=paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
   }
