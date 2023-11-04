@@ -227,8 +227,8 @@ print(OOD_Datasets)
 
 list0.9_InD = c()
 list0.9_OOD = c()
-for (i in 1:5){
-  pred = score_function(InD_Dataset, OOD_Datasets[i], q = 0.9, f = f, n_tr = n_tr)
+for (OOD_Dataset in OOD_Datasets){
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.9, f = f, n_tr = n_tr)
   list0.9_InD = c(list0.9_InD, pred$ID_all)
   list0.9_OOD = c(list0.9_OOD, pred$OOD_all)
 }
