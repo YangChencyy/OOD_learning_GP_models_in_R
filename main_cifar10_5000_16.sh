@@ -8,8 +8,8 @@
 #SBATCH --mail-user=rivachen@umich.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --partition=standard
-#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_cifar_5000_16.log
+#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_cifar_5000_32.log
 
 module load R
-Rscript --save main.R "Cifar_10" 1000 1000 16      
+Rscript --save main.R "Cifar_10" 1000 1000 32    
 
