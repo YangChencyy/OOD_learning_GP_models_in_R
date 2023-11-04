@@ -225,6 +225,23 @@ print(OOD_Datasets)
 
 # model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
 
+df = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/", OOD_Datasets[1], "_test.csv"))[,-1]
+plot <- plot_ly(data = df, x = ~df[4000:6000, f+11], y = ~df[4000:6000, f+12], text = ~df[4000:6000, f+13], mode = "markers")
+
+# Customize the appearance (optional)
+plot <- plot %>%
+  layout(
+    title = "Scatter Plot",
+    xaxis = list(title = "X1"),
+    yaxis = list(title = "X2")
+  )
+
+# Save the plot as an HTML file
+htmlwidgets::saveWidget(plot, "scatter_plot.html")
+
+
+
+
 list0.9_InD = c()
 list0.9_OOD = c()
 for (OOD_Dataset in OOD_Datasets){
