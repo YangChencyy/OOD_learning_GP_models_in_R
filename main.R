@@ -223,7 +223,7 @@ if (InD_Dataset == "MNIST"){
 print("########")
 print(OOD_Datasets)
 
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
+# model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
 
 list0.9_InD = c()
 list0.9_OOD = c()
@@ -235,8 +235,8 @@ for (i in 1:5){
 
 list0.8_InD = c()
 list0.8_OOD = c()
-for (i in 1:5){
-  pred = score_function(InD_Dataset, OOD_Datasets[i], q = 0.8, f = f, n_tr = n_tr)
+for (OOD_Dataset in OOD_Datasets){
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.8, f = f, n_tr = n_tr)
   list0.8_InD = c(list0.8_InD, pred$ID_all)
   list0.8_OOD = c(list0.8_OOD, pred$OOD_all)
 }
