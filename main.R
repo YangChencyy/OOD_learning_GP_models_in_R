@@ -220,7 +220,8 @@ if (InD_Dataset == "MNIST"){
 } else if (InD_Dataset == "Cifar_10"){
     OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
 }
-
+print("########")
+print(OOD_Datasets)
 
 model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
 
