@@ -223,7 +223,7 @@ if (InD_Dataset == "MNIST"){
 print("########")
 print(OOD_Datasets)
 
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
+# model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
 
 df = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/", OOD_Datasets[1], "_test.csv"))[,-1]
 plot <- plot_ly(data = df, x = ~df[, f+11], y = ~df[, f+12], text = ~label, mode = "markers")
@@ -241,6 +241,13 @@ htmlwidgets::saveWidget(plot, "scatter_plot.html")
 
 
 
+list0.95_InD = c()
+list0.95_OOD = c()
+for (OOD_Dataset in OOD_Datasets){
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.95, f = f, n_tr = n_tr)
+  list0.95_InD = c(list0.95_InD, pred$ID_all)
+  list0.95_OOD = c(list0.95_OOD, pred$OOD_all)
+}
 
 list0.9_InD = c()
 list0.9_OOD = c()
@@ -258,7 +265,9 @@ for (OOD_Dataset in OOD_Datasets){
   list0.8_OOD = c(list0.8_OOD, pred$OOD_all)
 }
 
-df = data.frame(InD_0.9 = list0.9_InD, 
+df = data.frame(InD_0.95 = list0.95_InD, 
+                   OOD_0.95 = list0.95_OOD,
+                   InD_0.9 = list0.9_InD, 
                    OOD_0.9 = list0.9_OOD,
                    InD_0.8 = list0.8_InD, 
                    OOD_0.8 = list0.8_OOD)
