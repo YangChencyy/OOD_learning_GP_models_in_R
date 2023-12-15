@@ -32,7 +32,7 @@ KL_all <- function(u1_list, u2, std1_list, std2){
 
 model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_tr = 1000, n_ts = 1000, f = 16){
   df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv"))[,-1]
-  set.seed(100)
+  set.seed(430)
 
   # Train dataset  
   select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
