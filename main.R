@@ -58,7 +58,7 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     X <- train.df[train.df[,"label"]==i-1, 1:f]
     y <- train.df[train.df[,"label"]==i-1, (f+i)] # only look at the scores of correct label
     
-    fit <- mlegp(data.matrix(X), data.matrix(y))  # , nugget = 1e-4
+    fit <- mlegp(data.matrix(X), data.matrix(y), nugget.known = 0, nugget = NULL)  # , nugget = 1e-4
     
     cv_results[[i]] = CV(fit)  # mean # VARIANCE
     cv_results[[i]][,2] = sqrt(cv_results[[i]][,2]) # calculate std based on variance
