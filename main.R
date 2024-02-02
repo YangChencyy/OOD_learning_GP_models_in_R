@@ -35,8 +35,9 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   set.seed(430)
 
   # Train dataset  
-  select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
-  train.df <- df[select.index, ]
+  # select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
+  # train.df <- df[select.index, ]
+  train.df <- df[1:n_tr, ]
   CNN_train_score = train.df[, (f+1):(f+10)]
   CNN_train_score = normalize.rows(as.matrix(exp(CNN_train_score)), method = "manhattan") #normalize
   
