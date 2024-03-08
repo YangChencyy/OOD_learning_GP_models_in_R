@@ -4,3 +4,10 @@ Rdata_*
 .DS_Store
 ./data_32/.DS_Store
 note.txt
+*.RData
+*.sh
+*.html
+*.Rout
+data_*/
+*.RData
+*.log

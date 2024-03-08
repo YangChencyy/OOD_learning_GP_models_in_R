@@ -8,7 +8,7 @@
 #SBATCH --mail-user=rivachen@umich.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --partition=standard
-#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_mnist_5000_10.log
+#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_mnist_5000_10_1.log
 
 module load R
 Rscript --save main.R "MNIST" 5000 1000 10

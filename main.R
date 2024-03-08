@@ -31,12 +31,16 @@ KL_all <- function(u1_list, u2, std1_list, std2){
 }
 
 model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_tr = 1000, n_ts = 1000, f = 16){
-  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv"))[,-1]
+  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv")) # [,-1]
   set.seed(430)
+  feature_names <- paste("f", 1:32, sep = "")
+  label_names <- paste("l", 1:10, sep = "")
+  column_names <- c(feature_names, label_names, "label")
+  colnames(df) <- column_names
 
   # Train dataset  
-  # select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
-  # train.df <- df[select.index, ]
+  select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
+  train.df <- df[select.index, ]
   train.df <- df[1:n_tr, ]
   CNN_train_score = train.df[, (f+1):(f+10)]
   CNN_train_score = normalize.rows(as.matrix(exp(CNN_train_score)), method = "manhattan") #normalize
@@ -55,11 +59,11 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   # 10 different clusters 
   foreach (i=1:10) %do% {
   #for(i in 1:10){  
-    
     X <- train.df[train.df[,"label"]==i-1, 1:f]
     y <- train.df[train.df[,"label"]==i-1, (f+i)] # only look at the scores of correct label
     
     fit <- mlegp(data.matrix(X), data.matrix(y)) #, nugget.known = 0, nugget = NULL)  # , nugget = 1e-4
+    
     
     
     cv_results[[i]] = CV(fit)  # mean # VARIANCE
@@ -89,7 +93,7 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     results_test = vector("list", 10)
     results_ood = vector("list", 10)
     
-    t.df = read.csv(paste0("data_", toString(f), "/", trainset, "/", testset, "_test.csv"))[,-1]
+    t.df = read.csv(paste0("data_", toString(f), "/", trainset, "/", testset, "_test.csv"))# [,-1]
     
     test.df = t.df[t.df[,"class"]=='test', ]
     ood.df = t.df[t.df[,"class"]=='OOD', ]    
@@ -121,8 +125,8 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
       s2.ood <- s2.ood + (results_ood[[i]]$se.fit^2 + results_ood[[i]]$fit^2) * CNN_OOD_score[,i]
     }  
     
-    test.df = test.df[1:n_ts, ]
-    ood.df = ood.df[1:n_ts, ]
+    #test.df = test.df #[1:n_ts, ]
+    #ood.df = ood.df #[1:n_ts, ]
     # print('save trained model and data to:', paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData") )
     save(results_test, test.df, results_ood, ood.df, cv_results,
          file=paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
@@ -199,7 +203,11 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9
     OOD_sum = OOD_sum + sum(ood.df[ood.df$predictions == i, ]$KL > KL_list[i])
     OOD_acc_list = c(OOD_acc_list, OOD_acc)
   }
-  
+
+  # write.csv(cv_results, file = "cv_results.csv", row.names = FALSE)
+  # write.csv(test.df, file = "test.csv", row.names = FALSE)
+  # write.csv(ood.df, file = "ood.csv", row.names = FALSE)
+
 
   # Create a list to store the dataframes
   result <- list(test.df = test.df, ood.df = ood.df, cv_results = cv_results,
@@ -221,6 +229,8 @@ if (InD_Dataset == "MNIST"){
     OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
 } else if (InD_Dataset == "Cifar_10"){
     OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
+} else if (InD_Dataset == "ImageNet"){
+    OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") # c("INaturalist", "SUN", "Places", "DTD")
 }
 print("########")
 print(OOD_Datasets)
@@ -278,3 +288,6 @@ print(paste0("InD - ", InD_Dataset))
 print(paste0("features - ", args[4]))
 print(paste0("n_tr - ", args[2]))
 paged_table(df)
+
+
+# try
