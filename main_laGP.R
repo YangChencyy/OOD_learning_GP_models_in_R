@@ -7,10 +7,13 @@ library(rmarkdown)
 library(MASS)
 library(foreach)
 library(umap)
+library(laGP)
 
+# setwd("/path/to/your/directory") # if run locally, set this to the directory of main.R
+# setwd("/Users/yangchen/Desktop/test")
 
 KL <- function(u1, u2, std1, std2){
-  kl_divergence <- log(std1 / std2) + (std2^2 + (u1 - u2)^2) / (2 * std1^2) - 0.5
+  kl_divergence <-  (std2^2 + (u1 - u2)^2) / (2 * std1^2) - 0.5 # log(std1 / std2) +
   return(kl_divergence)
 }
 
@@ -31,12 +34,11 @@ KL_all <- function(u1_list, u2, std1_list, std2){
 }
 
 model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_tr = 1000, n_ts = 1000, f = 16){
-  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv")) # [,-1]
+  ## Change here if you want to use different dataset
+  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train_10.csv")) # [,-1]
+  # df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv")) # [,-1]
   set.seed(430)
-  feature_names <- paste("f", 1:32, sep = "")
-  label_names <- paste("l", 1:10, sep = "")
-  column_names <- c(feature_names, label_names, "label")
-  colnames(df) <- column_names
+  # print(dim(df))
 
   # Train dataset  
   select.index <- sample(1:nrow(df), n_tr, replace = FALSE)
@@ -44,7 +46,6 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   train.df <- df[1:n_tr, ]
   CNN_train_score = train.df[, (f+1):(f+10)]
   CNN_train_score = normalize.rows(as.matrix(exp(CNN_train_score)), method = "manhattan") #normalize
-  
   
   Y <- rep(0,nrow(train.df))
   
@@ -56,27 +57,35 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
   models = vector("list", 10)
   cv_results = vector("list", 10)
   
+  
+  # 10 different clusters 
   # 10 different clusters 
   foreach (i=1:10) %do% {
-  #for(i in 1:10){  
+    # print(i)
+    #for(i in 1:10){  
     X <- train.df[train.df[,"label"]==i-1, 1:f]
     y <- train.df[train.df[,"label"]==i-1, (f+i)] # only look at the scores of correct label
     
-    fit <- mlegp(data.matrix(X), data.matrix(y)) #, nugget.known = 0, nugget = NULL)  # , nugget = 1e-4
+    d <- darg(NULL, X)
+    g <- garg(list(mle=TRUE), y)
+    
+    gpisep <- newGPsep(X, y, d=rep(d$start, ncol(X)), g=g$start, dK=TRUE)
+    # gpisep <- aGPsep.R(train.X, train.Y, d=rep(d$start, ncol(train.X)), g=g$start)
+    mle <- jmleGPsep(gpisep, drange=c(d$min, d$max), grange=c(g$min, g$max), d$ab, g$ab)  # , d$ab, g$ab
     
     
+    cv_res = predGPsep(gpisep, X, lite=TRUE)
     
-    cv_results[[i]] = CV(fit)  # mean # VARIANCE
-    cv_results[[i]][,2] = sqrt(cv_results[[i]][,2]) # calculate std based on variance
+    cv_results[[i]] = cbind(cv_res$mean, sqrt(cv_res$s2)) # mean # VARIANCE
+
+    models[[i]] = gpisep
     
-    models[[i]] = fit
-      
-    rm(fit)
+    rm(gpisep)
   } 
-  
   print("Train Finished")
   
-  directory_path <- paste0("Rdata_", toString(n_tr), "_", toString(f))
+  
+  directory_path <- paste0("Rdata_laGP_", toString(n_tr), "_", toString(f))
   
   # Use dir.create() to create the directory
   if (!dir.exists(directory_path)) {
@@ -96,10 +105,14 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     t.df = read.csv(paste0("data_", toString(f), "/", trainset, "/", testset, "_test.csv"))# [,-1]
     
     test.df = t.df[t.df[,"class"]=='test', ]
-    ood.df = t.df[t.df[,"class"]=='OOD', ]    
+    ood.df = t.df[t.df[,"class"]=='OOD', ]   
     
-    test.X <- test.df[1:n_ts, 1:f]
-    OOD.X <- ood.df[1:n_ts, 1:f]
+    # new
+    test.df = test.df[1:n_ts,]
+    ood.df = ood.df[1:n_ts,]
+    
+    test.X <- test.df[, 1:f]
+    OOD.X <- ood.df[, 1:f]
     
     CNN_test_score = test.df[1:n_ts, (f+1):(f+10)]
     CNN_test_score = normalize.rows(as.matrix(exp(CNN_test_score)), method = "manhattan") #normalize
@@ -107,29 +120,30 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     CNN_OOD_score = normalize.rows(as.matrix(exp(CNN_OOD_score)), method = "manhattan") #normalize
     
     for(i in 1:10){  # 10 different clusters 
-      fit = models[[i]]
-      results_test[[i]] <- predict(fit, data.matrix(test.X),se.fit=TRUE)
-      results_ood[[i]] <- predict(fit, data.matrix(OOD.X),se.fit=TRUE)
+      gpisep = models[[i]]
+      results_test[[i]] <- predGPsep(gpisep, test.X, lite=TRUE)
+      results_ood[[i]] <- predGPsep(gpisep, OOD.X, lite=TRUE)
     }
     
     # compute the predictive mean 
     y.test <- y.ood <- s2.test <- s2.ood <- rep(0, n_ts)
     for(i in 1:10){
-      y.test <- y.test + results_test[[i]]$fit * CNN_test_score[,i]
-      y.ood <- y.ood + results_ood[[i]]$fit * CNN_OOD_score[,i]
+      y.test <- y.test + results_test[[i]]$mean * CNN_test_score[,i]
+      y.ood <- y.ood + results_ood[[i]]$mean * CNN_OOD_score[,i]
     }
     
     # compute the predictive variance 
     for(i in 1:10){
-      s2.test <- s2.test + (results_test[[i]]$se.fit^2 + results_test[[i]]$fit^2) * CNN_test_score[,i]
-      s2.ood <- s2.ood + (results_ood[[i]]$se.fit^2 + results_ood[[i]]$fit^2) * CNN_OOD_score[,i]
+      s2.test <- s2.test + (results_test[[i]]$s2 + results_test[[i]]$mean^2) * CNN_test_score[,i]
+      s2.ood <- s2.ood + (results_ood[[i]]$s2 + results_ood[[i]]$mean^2) * CNN_OOD_score[,i]
     }  
     
-    test.df = test.df[1:n_ts, ]
-    ood.df = ood.df[1:n_ts, ]
-    print('save trained model and data to:', paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData") )
+    #test.df = test.df #[1:n_ts, ]
+    #ood.df = ood.df #[1:n_ts, ]
+    # print('save trained model and data to:', paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData") )
+   
     save(results_test, test.df, results_ood, ood.df, cv_results,
-         file=paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
+         file=paste0("Rdata_laGP_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
   }
   
   print("Test Finished")
@@ -143,9 +157,9 @@ get_argmax <- function(x) {
 }
 
 
-score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9, f = 16, n_tr = 1000, n_ts = 1000){
-
-  load(file=paste0("Rdata_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
+score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q_ = 0.9, f = 16, n_tr = 1000, n_ts = 1000){
+  setwd(getwd())
+  load(file=paste0("Rdata_laGP_", toString(n_tr), "_", toString(f), "/", trainset, "_", testset, ".RData"))
   
   test.df$predictions = apply(test.df[, (f+1):(f+10)], 1, get_argmax) + 1
   ood.df$predictions = apply(ood.df[, (f+1):(f+10)], 1, get_argmax) + 1
@@ -160,10 +174,10 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9
   ood.df$std = 0
   for (i in (1:nrow(test.df))){
     class = test.df$predictions[i]
-    test.df$mean[i] = results_test[[class]]$fit[i]
-    test.df$std[i] = results_test[[class]]$se.fit[i]
-    test.df$KL[i] = KL_all(cv_results[[class]][,1], results_test[[class]]$fit[i], # mean
-                           cv_results[[class]][,2], results_test[[class]]$se.fit[i]) # SD
+    test.df$mean[i] = results_test[[class]]$mean[i]
+    test.df$std[i] = sqrt(results_test[[class]]$s2[i])
+    test.df$KL[i] = KL_all(cv_results[[class]][,1], results_test[[class]]$mean[i], # mean
+                           cv_results[[class]][,2], sqrt(results_test[[class]]$s2[i])) # SD
   }
   
   # Calculate KL for train data
@@ -175,31 +189,36 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9
       kl_train = KL_all(cv_train[,1], cv_train[j,1], cv_train[,2], cv_train[j,2])
       kl_ = c(kl_, kl_train)
     }
-    KL_list = c(KL_list, quantile(kl_, q))
+    KL_list = c(KL_list, quantile(kl_, q_))
   }
   
   
   for (i in (1:nrow(ood.df))){
     class = ood.df$predictions[i]
-    ood.df$mean[i] = results_ood[[class]]$fit[i]
-    ood.df$std[i] = results_ood[[class]]$se.fit[i]
-    ood.df$KL[i] = KL_all(cv_results[[class]][,1], results_ood[[class]]$fit[i], # mean
-                           cv_results[[class]][,2], results_ood[[class]]$se.fit[i]) # SD
+    ood.df$mean[i] = results_ood[[class]]$mean[i]
+    ood.df$std[i] = sqrt(results_ood[[class]]$s2[i])
+    ood.df$KL[i] = KL_all(cv_results[[class]][,1], results_ood[[class]]$mean[i], # mean
+                           cv_results[[class]][,2], sqrt(results_ood[[class]]$s2[i])) # SD
   }
   
   ID_acc_list = c()
   OOD_acc_list = c()
   ID_sum = 0
   OOD_sum = 0
+  columns = 0
 
   for (i in 1:10){
     ID_acc = mean(test.df[test.df$predictions == i, ]$KL < KL_list[i])
     ID_sum = ID_sum + sum(test.df[test.df$predictions == i, ]$KL < KL_list[i])
+    columns = columns + nrow(test.df[test.df$predictions == i, ])
+    
     ID_acc_list = c(ID_acc_list, ID_acc)
     OOD_acc = mean(ood.df[ood.df$predictions == i, ]$KL > KL_list[i])
     OOD_sum = OOD_sum + sum(ood.df[ood.df$predictions == i, ]$KL > KL_list[i])
     OOD_acc_list = c(OOD_acc_list, OOD_acc)
   }
+
+
 
   # Create a list to store the dataframes
   result <- list(test.df = test.df, ood.df = ood.df, cv_results = cv_results,
@@ -208,42 +227,60 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q = 0.9
   return(result)
 }
 
-# 
+
+
+# if run with arguments (Rscript --save main.R "ImageNet" 3000 1000 32)
 args <- commandArgs(trailingOnly = TRUE)
 InD_Dataset = args[1]
 n_tr = as.integer(args[2])
 n_ts = as.integer(args[3])
 
 f = as.integer(args[4])
-if (InD_Dataset == "MNIST"){
-    OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-} else if (InD_Dataset == "FashionMNIST"){
-    OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-} else if (InD_Dataset == "Cifar_10"){
-    OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
-} else if (InD_Dataset == "ImageNet"){
-    OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") # c("INaturalist", "SUN", "Places", "DTD")
+# if (InD_Dataset == "MNIST"){
+#     OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+# } else if (InD_Dataset == "FashionMNIST"){
+#     OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+# } else if (InD_Dataset == "Cifar_10"){
+#     OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
+# } else if (InD_Dataset == "ImageNet"){
+#     OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
+# }
+
+###########################  filter data  ############################
+InD_Dataset == "ImageNet"
+OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
+
+
+train.df.selected = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/train.csv")) # [,-1]
+
+split_data <- split(train.df.selected, train.df.selected$label)
+
+top_10_indices_per_label <- list()
+
+for(label in names(split_data)) {
+  subset_df <- split_data[[label]]
+  distance_matrix <- as.matrix(dist(subset_df[, 1:32]))
+  median_distances <- apply(distance_matrix, 1, median)
+  sorted_data <- sort(median_distances, decreasing = TRUE)
+  index_90th_percentile <- round(length(sorted_data) * 0.9)
+  first_90_percent <- sorted_data[1:index_90th_percentile]
+  top_10_indices_per_label[[label]] <- first_90_percent
 }
-print("########")
-print(OOD_Datasets)
 
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once, specify the training samples to use
-
-# df = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/", OOD_Datasets[1], "_test.csv"))[,-1]
-# plot <- plot_ly(data = df, x = ~df[, f+11], y = ~df[, f+12], text = ~label, mode = "markers")
-
-# # Customize the appearance (optional)
-# plot <- plot %>%
-#   layout(
-#     title = "Scatter Plot",
-#     xaxis = list(title = "X1"),
-#     yaxis = list(title = "X2")
-#   )
-
-# # Save the plot as an HTML file
-# htmlwidgets::saveWidget(plot, "scatter_plot.html")
+all_top_10_indices <- unlist(lapply(top_10_indices_per_label, FUN = function(x) as.numeric(names(x))))
+filtered_df <- train.df.selected[all_top_10_indices, ]
+print(dim(filtered_df))
+write.csv(filtered_df, "data_32/ImageNet/train_10.csv", row.names = FALSE)
 
 
+###########################  fit model  ############################
+
+
+model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once
+
+
+
+###########################  score function  ############################
 
 list0.95_InD = c()
 list0.95_OOD = c()
@@ -269,11 +306,11 @@ for (OOD_Dataset in OOD_Datasets){
   list0.8_OOD = c(list0.8_OOD, pred$OOD_all)
 }
 
-df = data.frame(InD_0.95 = list0.95_InD, 
+df = data.frame(InD_0.95 = list0.95_InD,
                    OOD_0.95 = list0.95_OOD,
-                   InD_0.9 = list0.9_InD, 
+                   InD_0.9 = list0.9_InD,
                    OOD_0.9 = list0.9_OOD,
-                   InD_0.8 = list0.8_InD, 
+                   InD_0.8 = list0.8_InD,
                    OOD_0.8 = list0.8_OOD)
 rownames(df) <- OOD_Datasets
 print(paste0("InD - ", InD_Dataset))
@@ -281,5 +318,3 @@ print(paste0("features - ", args[4]))
 print(paste0("n_tr - ", args[2]))
 paged_table(df)
 
-
-# try
