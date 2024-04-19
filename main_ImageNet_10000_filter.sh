@@ -8,8 +8,8 @@
 #SBATCH --mail-user=rivachen@umich.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --partition=standard
-#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_imagenet_10000_32.log
+#SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_imagenet_10000_32_filter.log
 
 module load R
-Rscript --save main_laGP.R "ImageNet" 10000 1000 32
+Rscript --save main_laGP.R "ImageNet" 8500 1000 32
 

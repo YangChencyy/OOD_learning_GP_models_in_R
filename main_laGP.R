@@ -35,8 +35,8 @@ KL_all <- function(u1_list, u2, std1_list, std2){
 
 model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_tr = 1000, n_ts = 1000, f = 16){
   ## Change here if you want to use different dataset
-  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train_10.csv")) # [,-1]
-  # df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv")) # [,-1]
+  # df = read.csv(paste0("data_", toString(f), "/", trainset, "/train_10.csv")) # [,-1]
+  df = read.csv(paste0("data_", toString(f), "/", trainset, "/train.csv")) # [,-1]
   set.seed(430)
   # print(dim(df))
 
@@ -66,15 +66,9 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     X <- train.df[train.df[,"label"]==i-1, 1:f]
     y <- train.df[train.df[,"label"]==i-1, (f+i)] # only look at the scores of correct label
     
-    d <- darg(NULL, X)
-    g <- garg(list(mle=TRUE), y)
+    gpisep <- newGP(X, y, d=10, g=1e-4, dK=TRUE)
     
-    gpisep <- newGPsep(X, y, d=rep(d$start, ncol(X)), g=g$start, dK=TRUE)
-    # gpisep <- aGPsep.R(train.X, train.Y, d=rep(d$start, ncol(train.X)), g=g$start)
-    mle <- jmleGPsep(gpisep, drange=c(d$min, d$max), grange=c(g$min, g$max), d$ab, g$ab)  # , d$ab, g$ab
-    
-    
-    cv_res = predGPsep(gpisep, X, lite=TRUE)
+    cv_res = predGP(gpisep, X, lite=TRUE)
     
     cv_results[[i]] = cbind(cv_res$mean, sqrt(cv_res$s2)) # mean # VARIANCE
 
@@ -121,8 +115,8 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     
     for(i in 1:10){  # 10 different clusters 
       gpisep = models[[i]]
-      results_test[[i]] <- predGPsep(gpisep, test.X, lite=TRUE)
-      results_ood[[i]] <- predGPsep(gpisep, OOD.X, lite=TRUE)
+      results_test[[i]] <- predGP(gpisep, test.X, lite=TRUE)
+      results_ood[[i]] <- predGP(gpisep, OOD.X, lite=TRUE)
     }
     
     # compute the predictive mean 
@@ -217,6 +211,12 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q_ = 0.
     OOD_sum = OOD_sum + sum(ood.df[ood.df$predictions == i, ]$KL > KL_list[i])
     OOD_acc_list = c(OOD_acc_list, OOD_acc)
   }
+  print("n_ts:")
+  print(n_ts)
+  print("ind_acc")
+  print(ID_acc_list)
+  print("ood_acc")
+  print(OOD_acc_list)
 
 
 
@@ -251,32 +251,32 @@ InD_Dataset == "ImageNet"
 OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
 
 
-train.df.selected = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/train.csv")) # [,-1]
+# train.df.selected = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/train.csv")) # [,-1]
 
-split_data <- split(train.df.selected, train.df.selected$label)
+# split_data <- split(train.df.selected, train.df.selected$label)
 
-top_10_indices_per_label <- list()
+# top_10_indices_per_label <- list()
 
-for(label in names(split_data)) {
-  subset_df <- split_data[[label]]
-  distance_matrix <- as.matrix(dist(subset_df[, 1:32]))
-  median_distances <- apply(distance_matrix, 1, median)
-  sorted_data <- sort(median_distances, decreasing = TRUE)
-  index_90th_percentile <- round(length(sorted_data) * 0.9)
-  first_90_percent <- sorted_data[1:index_90th_percentile]
-  top_10_indices_per_label[[label]] <- first_90_percent
-}
+# for(label in names(split_data)) {
+#   subset_df <- split_data[[label]]
+#   distance_matrix <- as.matrix(dist(subset_df[, 1:32]))
+#   median_distances <- apply(distance_matrix, 1, median)
+#   sorted_data <- sort(median_distances, decreasing = TRUE)
+#   index_90th_percentile <- round(length(sorted_data) * 0.9)
+#   first_90_percent <- sorted_data[1:index_90th_percentile]
+#   top_10_indices_per_label[[label]] <- first_90_percent
+# }
 
-all_top_10_indices <- unlist(lapply(top_10_indices_per_label, FUN = function(x) as.numeric(names(x))))
-filtered_df <- train.df.selected[all_top_10_indices, ]
-print(dim(filtered_df))
-write.csv(filtered_df, "data_32/ImageNet/train_10.csv", row.names = FALSE)
+# all_top_10_indices <- unlist(lapply(top_10_indices_per_label, FUN = function(x) as.numeric(names(x))))
+# filtered_df <- train.df.selected[all_top_10_indices, ]
+# print(dim(filtered_df))
+# write.csv(filtered_df, "data_32/ImageNet/train_10.csv", row.names = FALSE)
 
 
 ###########################  fit model  ############################
 
 
-model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once
+# model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once
 
 
 
@@ -285,7 +285,7 @@ model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_t
 list0.95_InD = c()
 list0.95_OOD = c()
 for (OOD_Dataset in OOD_Datasets){
-  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.95, f = f, n_tr = n_tr)
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.95, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.95_InD = c(list0.95_InD, pred$ID_all)
   list0.95_OOD = c(list0.95_OOD, pred$OOD_all)
 }
@@ -293,7 +293,7 @@ for (OOD_Dataset in OOD_Datasets){
 list0.9_InD = c()
 list0.9_OOD = c()
 for (OOD_Dataset in OOD_Datasets){
-  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.9, f = f, n_tr = n_tr)
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.9, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.9_InD = c(list0.9_InD, pred$ID_all)
   list0.9_OOD = c(list0.9_OOD, pred$OOD_all)
 }
@@ -301,7 +301,7 @@ for (OOD_Dataset in OOD_Datasets){
 list0.8_InD = c()
 list0.8_OOD = c()
 for (OOD_Dataset in OOD_Datasets){
-  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.8, f = f, n_tr = n_tr)
+  pred = score_function(InD_Dataset, OOD_Dataset, q = 0.8, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.8_InD = c(list0.8_InD, pred$ID_all)
   list0.8_OOD = c(list0.8_OOD, pred$OOD_all)
 }
