@@ -11,5 +11,5 @@
 #SBATCH --output=/home/rivachen/OOD_learning_GP_models_in_R/results_imagenet_10000_32.log
 
 module load R
-Rscript --save main_laGP.R "ImageNet" 10000 1000 32
+Rscript --save main_laGP.R "ImageNet" 10000 2000 32
 

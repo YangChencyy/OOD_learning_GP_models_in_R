@@ -222,7 +222,8 @@ score_function <- function(trainset = "MNIST", testset = "FashionMNIST", q_ = 0.
 
   # Create a list to store the dataframes
   result <- list(test.df = test.df, ood.df = ood.df, cv_results = cv_results,
-                 ID_acc = ID_acc_list, OOD_acc = OOD_acc_list, ID_all = ID_sum/n_ts, OOD_all = OOD_sum/n_ts)
+                 ID_acc = ID_acc_list, OOD_acc = OOD_acc_list, ID_all = ID_sum/n_ts, OOD_all = OOD_sum/n_ts, 
+                 AUROC = 1/2 - (1-OOD_sum/n_ts)/2 + ID_sum/n_ts/2)
   
   return(result)
 }
@@ -236,19 +237,19 @@ n_tr = as.integer(args[2])
 n_ts = as.integer(args[3])
 
 f = as.integer(args[4])
-# if (InD_Dataset == "MNIST"){
-#     OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-# } else if (InD_Dataset == "FashionMNIST"){
-#     OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
-# } else if (InD_Dataset == "Cifar_10"){
-#     OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
-# } else if (InD_Dataset == "ImageNet"){
-#     OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
-# }
+if (InD_Dataset == "MNIST"){
+    OOD_Datasets = c("FashionMNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+} else if (InD_Dataset == "FashionMNIST"){
+    OOD_Datasets = c("MNIST", "Cifar_10", "SVHN", "Imagenet_r", "Imagenet_c")
+} else if (InD_Dataset == "Cifar_10"){
+    OOD_Datasets = c("SVHN", "Imagenet_r", "Imagenet_c")
+} else if (InD_Dataset == "ImageNet"){
+    OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
+}
 
 ###########################  filter data  ############################
-InD_Dataset == "ImageNet"
-OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
+# InD_Dataset == "ImageNet"
+# OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN") 
 
 
 # train.df.selected = read.csv(paste0("data_", toString(f), "/", InD_Dataset, "/train.csv")) # [,-1]
@@ -284,34 +285,43 @@ OOD_Datasets = c("DTD", "iSUN", "LSUN", "Places", "SUN")
 
 list0.95_InD = c()
 list0.95_OOD = c()
+list0.95_AUROC = c()
 for (OOD_Dataset in OOD_Datasets){
   pred = score_function(InD_Dataset, OOD_Dataset, q = 0.95, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.95_InD = c(list0.95_InD, pred$ID_all)
   list0.95_OOD = c(list0.95_OOD, pred$OOD_all)
+  list0.95_AUROC = c(list0.95_AUROC, pred$AUROC)
 }
 
 list0.9_InD = c()
 list0.9_OOD = c()
+list0.9_AUROC = c()
 for (OOD_Dataset in OOD_Datasets){
   pred = score_function(InD_Dataset, OOD_Dataset, q = 0.9, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.9_InD = c(list0.9_InD, pred$ID_all)
   list0.9_OOD = c(list0.9_OOD, pred$OOD_all)
+  list0.9_AUROC = c(list0.9_AUROC, pred$AUROC)
 }
 
 list0.8_InD = c()
 list0.8_OOD = c()
+list0.8_AUROC = c()
 for (OOD_Dataset in OOD_Datasets){
   pred = score_function(InD_Dataset, OOD_Dataset, q = 0.8, f = f, n_tr = n_tr, n_ts = n_ts)
   list0.8_InD = c(list0.8_InD, pred$ID_all)
   list0.8_OOD = c(list0.8_OOD, pred$OOD_all)
+  list0.8_AUROC = c(list0.8_AUROC, pred$AUROC)
 }
 
 df = data.frame(InD_0.95 = list0.95_InD,
                    OOD_0.95 = list0.95_OOD,
+                   AUROC_0.95 = list0.95_AUROC,
                    InD_0.9 = list0.9_InD,
                    OOD_0.9 = list0.9_OOD,
+                   AUROC_0.9 = list0.9_AUROC,
                    InD_0.8 = list0.8_InD,
-                   OOD_0.8 = list0.8_OOD)
+                   OOD_0.8 = list0.8_OOD,
+                   AUROC_0.8 = list0.8_AUROC)
 rownames(df) <- OOD_Datasets
 print(paste0("InD - ", InD_Dataset))
 print(paste0("features - ", args[4]))
