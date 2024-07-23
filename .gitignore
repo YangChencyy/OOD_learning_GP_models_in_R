@@ -10,3 +10,4 @@ note.txt
 data_*/
 *.RData
 *.log
+large/

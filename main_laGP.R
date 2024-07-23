@@ -13,7 +13,7 @@ library(laGP)
 # setwd("/Users/yangchen/Desktop/test")
 
 KL <- function(u1, u2, std1, std2){
-  kl_divergence <-  (std2^2 + (u1 - u2)^2) / (2 * std1^2) - 0.5 # log(std1 / std2) +
+  kl_divergence <- log(std1 / std2) + (std2^2 + (u1 - u2)^2) / (2 * std1^2) - 0.5 # log(std1 / std2) +
   return(kl_divergence)
 }
 
@@ -96,7 +96,7 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     results_test = vector("list", 10)
     results_ood = vector("list", 10)
     
-    t.df = read.csv(paste0("data_", toString(f), "/", trainset, "/", testset, "_test.csv"))# [,-1]
+    t.df = read.csv(paste0("data_", toString(f), "/", trainset, "/", testset, "_test.csv")) # [,-1]
     
     test.df = t.df[t.df[,"class"]=='test', ]
     ood.df = t.df[t.df[,"class"]=='OOD', ]   
@@ -277,7 +277,7 @@ if (InD_Dataset == "MNIST"){
 ###########################  fit model  ############################
 
 
-# model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once
+model_fit_test(trainset = InD_Dataset, testsets = OOD_Datasets, n_tr = n_tr, n_ts = n_ts, f = f)  # Run only once
 
 
 
