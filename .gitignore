@@ -1,5 +1,6 @@
 data_*
 Rdata_*
+Rdata*
 .Rhistory
 .DS_Store
 ./data_32/.DS_Store
@@ -10,4 +11,4 @@ note.txt
 data_*/
 *.RData
 *.log
-large/
+data100class_128/
