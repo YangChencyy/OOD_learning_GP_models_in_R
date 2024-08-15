@@ -8,6 +8,7 @@ library(MASS)
 library(foreach)
 library(umap)
 library(laGP)
+library(rmarkdown)
 
 # setwd("/path/to/your/directory") # if run locally, set this to the directory of main.R
 # setwd("/Users/yangchen/Desktop/test")
@@ -93,7 +94,7 @@ model_fit_test <- function(trainset = "MNIST", testsets = c("FashionMNIST"), n_t
     cat("Directory already exists:", directory_path, "\n")
   }
 
-  test.df = df[n_tr+1:n_tr+n_ts, ]
+  test.df = df[(n_tr+1):(n_tr+n_ts), ]
   
   for (testset in testsets){
     results_test = vector("list", 100)
@@ -330,5 +331,7 @@ rownames(df) <- OOD_Datasets
 print(paste0("InD - ", InD_Dataset))
 print(paste0("features - ", args[4]))
 print(paste0("n_tr - ", args[2]))
+print(rownames(df))
+print(df)
 paged_table(df)
 
